@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"os"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -25,21 +25,21 @@ func main() {
 
 	r.LoadHTMLFiles("templates/help.html")
 
-	r.GET("/cloudMusic", CloudMusicView)
-	r.GET("/cloudMusic/resource", ResourceView)
-	r.GET("/cloudMusic/search", SearchView)
+	r.GET("/random", RandomView)
 	r.GET("/help", func(c *gin.Context) {
 		c.HTML(200, "help.html", gin.H{
 			"title": "帮助",
 		})
 	})
+	go TickClearCache()
 
 	log.Fatal(r.Run(":1627"))
 }
 
-func CloudMusicView(c *gin.Context) {
-	url := c.Request.URL.RawQuery
-	res, err := CloudMusic(url)
+func RandomView(c *gin.Context) {
+
+	PlaylistId := c.DefaultQuery("playlist_id", "2467106683")
+	res, err := Random(PlaylistId)
 
 	statusCode := 200
 	if err != nil {
@@ -48,6 +48,12 @@ func CloudMusicView(c *gin.Context) {
 
 	c.String(statusCode, res)
 
+}
+
+// 参数格式
+type ResourceParam struct {
+	Type string `form:"type" binding:"required"`
+	Id   string `form:"id" binding:"required"`
 }
 
 func ResourceView(c *gin.Context) {
@@ -61,34 +67,7 @@ func ResourceView(c *gin.Context) {
 
 	rType := c.DefaultQuery("type", "1")
 	rId := c.Query("id")
-	res, err := GetResource(rType, rId)
+	fmt.Println(rType, rId)
 
-	statusCode := 200
-	if err != nil {
-		statusCode = 404
-	}
-
-	c.String(statusCode, res)
-}
-
-func SearchView(c *gin.Context) {
-	// 验证参数
-	var param SearchParam
-	if err := c.ShouldBind(&param); err != nil {
-		c.String(400, "error: %s", err)
-		c.Abort()
-		return
-	}
-
-	sType := c.DefaultQuery("search_type", "1")
-	sKeyword := c.Query("keyword")
-
-	res, err := Search(sType, sKeyword)
-
-	statusCode := 200
-	if err != nil {
-		statusCode = 404
-	}
-
-	c.String(statusCode, res)
+	c.String(200, "nothing")
 }
