@@ -1,1 +1,332 @@
-<div class="RichText ztext Post-RichText"><h2><b>请勿将本文中提到的任何api接口用作商业用途，原文转载自：https://zhuanlan.zhihu.com/p/30246788。</b></h2><p class="ztext-empty-paragraph"><br></p><h2>调用方法</h2><p>GET <a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/" class=" external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043"><span class="invisible">https://</span><span class="visible">api.imjad.cn/cloudmusic</span><span class="invisible">/</span><span class="ellipsis"></span></a></p><p>在以上网址后紧跟两个参数完成具体请求：</p><ol><li><b>type    </b>（默认值为type=song）</li><li><b>id</b>（歌曲的id）</li></ol><p>其中type的所有可取的值如下：</p><figure data-size="normal"><noscript><img src="https://pic1.zhimg.com/v2-beeb95793e0e1681d1a1f2714da73ce8_b.jpg" data-caption="" data-size="normal" data-rawwidth="258" data-rawheight="484" class="content_image" width="258"/></noscript><img src="https://pic1.zhimg.com/80/v2-beeb95793e0e1681d1a1f2714da73ce8_hd.jpg" data-caption="" data-size="normal" data-rawwidth="258" data-rawheight="484" class="content_image lazy" width="258" data-actualsrc="https://pic1.zhimg.com/v2-beeb95793e0e1681d1a1f2714da73ce8_b.jpg" data-lazy-status="ok"></figure><h2><b>1. type=song</b></h2><p>当type=song时，返回歌曲的下载地址信息（和其他不是特别有用的信息）</p><p>所以当我们知道一首歌的id后，就可以用type=song来获取到这首歌的下载链接</p><p>完整请求示例：</p><p>请求id为28012031的歌曲下载地址</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Dsong%26id%3D28012031%26br%3D128000" class=" wrap external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043">https://api.imjad.cn/cloudmusic/?type=song&amp;id=28012031</a></p><p>应当指出：此时返回的歌曲比特率为默认值128000，如果你需要音质更高的资源，可以再尾部再跟上参数 br,br的取值决定音质，大概是这样</p><figure data-size="normal"><noscript><img src="https://pic1.zhimg.com/v2-17f4d66149deb1abd928ebd7d9aa859c_b.jpg" data-caption="" data-size="normal" data-rawwidth="625" data-rawheight="79" class="origin_image zh-lightbox-thumb" width="625" data-original="https://pic1.zhimg.com/v2-17f4d66149deb1abd928ebd7d9aa859c_r.jpg"/></noscript><img src="https://pic1.zhimg.com/80/v2-17f4d66149deb1abd928ebd7d9aa859c_hd.jpg" data-caption="" data-size="normal" data-rawwidth="625" data-rawheight="79" class="origin_image zh-lightbox-thumb lazy" width="625" data-original="https://pic1.zhimg.com/v2-17f4d66149deb1abd928ebd7d9aa859c_r.jpg" data-actualsrc="https://pic1.zhimg.com/v2-17f4d66149deb1abd928ebd7d9aa859c_b.jpg" data-lazy-status="ok"></figure><p>完整请求示例：</p><p>请求id为28012031的歌曲下载地址，br为320000</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Dsong%26id%3D28012031%26br%3D128000" class=" wrap external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043">https://api.imjad.cn/cloudmusic/?type=song&amp;id=28012031&amp;</a>br=320000</p><p>我不确定是不是每一首歌都有br=320000的版本哦...(￣▽￣")</p><h2><b>2.type=lyric</b></h2><p>当我们知道一首歌的id后，就可以用type=lyric来获取到这首歌的歌词</p><p>完整请求示例：</p><p>请求id为28012031歌曲的歌词信息</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Dlyric%26id%3D28012031" class=" external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043"><span class="invisible">https://</span><span class="visible">api.imjad.cn/cloudmusic</span><span class="invisible">/?type=lyric&amp;id=28012031</span><span class="ellipsis"></span></a></p><p>返回的歌词信息中会带有时间轴0.0</p><h2><b>3.type=comments</b></h2><p>当我们知道一首歌的id后，就可以用type=comments来获取到这首歌的评论信息</p><p>完整请求示例：</p><p>请求id为28012031歌曲的评论信息</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Dcomments%26id%3D28012031" class=" external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043"><span class="invisible">https://</span><span class="visible">api.imjad.cn/cloudmusic</span><span class="invisible">/?type=comments&amp;id=28012031</span><span class="ellipsis"></span></a></p><p>返回的数据中有一个json数组专门存储热评，另一个json数组专门存储最新评论。<br>每一条评论中包含非常多的重要信息，你需要用到的里面基本上都有 ・㉨・</p><h2><b>4.type=detail</b></h2><p>返回一些比较基本的信息，歌曲名歌曲id，歌手名歌手id，专辑封面图之类的</p><p>完整请求示例：</p><p>请求id为28012031歌曲的detail信息</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Ddetail%26id%3D28012031" class=" external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043"><span class="invisible">https://</span><span class="visible">api.imjad.cn/cloudmusic</span><span class="invisible">/?type=detail&amp;id=28012031</span><span class="ellipsis"></span></a></p><p>你试试把detail加个s...居然也有数据返回...(´・ω・`)  </p><h2><b>5.type=playlist</b></h2><p>（playlist前面的几个值我就不具体说了，有需要的人自己试试就行）</p><p>当我们知道一个<b>歌单</b>的id后，就可以用type=playlist来获取到这个歌单的相关信息，例如创建者的信息啊，封面图啊，歌单被播放的次数啊....当然还有最重要的歌单内所有歌曲的简略信息（包含歌曲id等等）</p><p>完整请求示例：</p><p>请求歌单id为309390784的歌单信息</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Dplaylist%26id%3D309390784" class=" external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043"><span class="invisible">https://</span><span class="visible">api.imjad.cn/cloudmusic</span><span class="invisible">/?type=playlist&amp;id=309390784</span><span class="ellipsis"></span></a></p><p>当然你也可以把id改成你自己喜欢的一个歌单，至于歌单id怎么获取嘛，你在网易云音乐的歌单上按右键，复制链接，拿去浏览器里打开，地址栏里面可以看到这个歌单的id┌( ಠ_ಠ)┘</p><h2><b>6.type=search</b></h2><p>这个我感觉挺重要的，仔细看好了</p><p>当你指定type=search时，后面需要紧跟参数search_type，用来确定你到底需要搜个什么</p><p>search_type可以取的值如下：</p><figure data-size="normal"><noscript><img src="https://pic3.zhimg.com/v2-131a485263daad35b3f4a78ccabed90a_b.jpg" data-caption="" data-size="normal" data-rawwidth="212" data-rawheight="339" class="content_image" width="212"/></noscript><img src="https://pic3.zhimg.com/80/v2-131a485263daad35b3f4a78ccabed90a_hd.jpg" data-caption="" data-size="normal" data-rawwidth="212" data-rawheight="339" class="content_image lazy" width="212" data-actualsrc="https://pic3.zhimg.com/v2-131a485263daad35b3f4a78ccabed90a_b.jpg" data-lazy-status="ok"></figure><h2>1.search_type=1</h2><p>默认情况下search_type的值为1，搜索单曲。后面紧跟s=xxxxx来指定搜索的关键字</p><p>完整请求示例：</p><p>搜索单曲，关键字为cocoon（歌名）</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Dsearch%26search_type%3D1%26s%3Dcocoon" class=" external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043"><span class="invisible">https://</span><span class="visible">api.imjad.cn/cloudmusic</span><span class="invisible">/?type=search&amp;search_type=1&amp;s=cocoon</span><span class="ellipsis"></span></a></p><p>返回很多歌名为cocoon的歌曲信息，大概返回多少首我不知道，你需要的里面应该有..</p><h2>2.search_type=1000</h2><p>搜索歌单。用歌单名用作关键字，来搜索歌单这样的简单东西就不说了，这里提一下另外一点，出了歌单名之外，你可以用<b>用户名</b>来作为关键字，这样返回的是该用户创建的所有歌单</p><p>完整请求示例：</p><p>搜索歌单，用户CeuiLiSA所创建的所有歌单（我自己的用户名）</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Dsearch%26search_type%3D1000%26s%3DCeuiLiSA" class=" external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043"><span class="invisible">https://</span><span class="visible">api.imjad.cn/cloudmusic</span><span class="invisible">/?type=search&amp;search_type=1000&amp;s=CeuiLiSA</span><span class="ellipsis"></span></a></p><p>返回的是歌单的简略信息，没有歌单内的具体的歌。只有id啊封面啊之类的内容，但是你只要有了歌单id，那就可以取得所有你需要的信息啦。。</p><h2>3.search_type=1002</h2><p>这样就可以搜索到网易云音乐的某个用户信息了。返回的用户信息不多不少，刚好可以用来做用户信息展示的页面。。</p><p>完整请求示例：</p><p>搜索用户，关键字为CeuiLiSA</p><p><a href="https://link.zhihu.com/?target=https%3A//api.imjad.cn/cloudmusic/%3Ftype%3Dsearch%26search_type%3D1002%26s%3DCeuiLiSA" class=" external" target="_blank" rel="nofollow noreferrer" data-za-detail-view-id="1043"><span class="invisible">https://</span><span class="visible">api.imjad.cn/cloudmusic</span><span class="invisible">/?type=search&amp;search_type=1002&amp;s=CeuiLiSA</span><span class="ellipsis"></span></a></p><p class="ztext-empty-paragraph"><br></p><p>主要的功能就介绍到这里，还有很多没介绍到的，有需要的人自己去试试吧</p><p>请不要将这个api用作商业用途，用这个api来自己写app练个手是很好的。</p></div>
+<head>
+    <style>
+        body {
+            margin: 0 auto;
+            font-family: ubuntu, Tahoma, "Microsoft YaHei", arial, sans-serif;
+            color: #444;
+            line-height: 1;
+            padding: 30px
+        }
+
+        img {
+            max-width: 100%
+        }
+
+        @media screen and (min-width: 1000px) {
+            body {
+                width: 842px;
+                margin: 10px auto
+            }
+        }
+
+        h1, h2, h3, h4 {
+            color: #111;
+            font-weight: 400;
+            margin-top: 1em
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-family: Georgia, Palatino, serif
+        }
+
+        dl, h1, h2, h3, h4, h5 {
+            margin-bottom: 16px;
+            padding: 0
+        }
+
+        p {
+            margin-top: 8px;
+            margin-bottom: 3px
+        }
+
+        h1 {
+            font-size: 48px;
+            line-height: 54px
+        }
+
+        h2 {
+            font-size: 36px;
+            line-height: 42px
+        }
+
+        h1, h2 {
+            border-bottom: 1px solid #EFEAEA;
+            padding-bottom: 10px
+        }
+
+        h3 {
+            font-size: 24px;
+            line-height: 30px
+        }
+
+        h4 {
+            font-size: 21px;
+            line-height: 26px
+        }
+
+        h5 {
+            font-size: 18px;
+            line-height: 23px
+        }
+
+        a {
+            color: #09f;
+            margin: 0 2px;
+            padding: 0;
+            vertical-align: baseline;
+            text-decoration: none
+        }
+
+        a:hover {
+            text-decoration: none;
+            color: #f60
+        }
+
+        ol, ul {
+            padding: 0;
+            padding-left: 18px;
+            margin: 0
+        }
+
+        li {
+            line-height: 24px
+        }
+
+        ol, p, ul {
+            font-size: 16px;
+            line-height: 24px
+        }
+
+        ol ol, ul ol {
+            list-style-type: lower-roman
+        }
+
+        code, pre {
+            font-family: Consolas, Monaco, Andale Mono, monospace;
+            background-color: #f7f7f7;
+            color: inherit
+        }
+
+        code {
+            font-family: Consolas, Monaco, Andale Mono, monospace;
+            margin: 0 2px
+        }
+
+        pre {
+            font-family: Consolas, Monaco, Andale Mono, monospace;
+            line-height: 1.7em;
+            overflow: auto;
+            padding: 6px 10px;
+            border-left: 5px solid #6CE26C
+        }
+
+        pre > code {
+            font-family: Consolas, Monaco, Andale Mono, monospace;
+            border: 0;
+            display: inline;
+            max-width: initial;
+            padding: 0;
+            margin: 0;
+            overflow: initial;
+            line-height: 1.6em;
+            font-size: .95em;
+            white-space: pre;
+            background: 0 0
+        }
+
+        code {
+            color: #666555
+        }
+
+        aside {
+            display: block;
+            float: right;
+            width: 390px
+        }
+
+        blockquote {
+            border-left: .5em solid #eee;
+            padding: 0 0 0 2em;
+            margin-left: 0
+        }
+
+        blockquote cite {
+            font-size: 14px;
+            line-height: 20px;
+            color: #bfbfbf
+        }
+
+        blockquote cite:before {
+            content: '\2014 \00A0'
+        }
+
+        blockquote p {
+            color: #666
+        }
+
+        hr {
+            text-align: left;
+            color: #999;
+            height: 2px;
+            padding: 0;
+            margin: 16px 0;
+            background-color: #e7e7e7;
+            border: 0 none
+        }
+
+        dl {
+            padding: 0
+        }
+
+        dl dt {
+            padding: 10px 0;
+            margin-top: 16px;
+            font-size: 1em;
+            font-style: italic;
+            font-weight: 700
+        }
+
+        dl dd {
+            padding: 0 16px;
+            margin-bottom: 16px
+        }
+
+        dd {
+            margin-left: 0
+        }
+
+        table {
+            border-spacing: 0;
+            width: 100%
+        }
+
+        table {
+            border: solid #ccc 1px
+        }
+
+        table thead {
+            background: #f7f7f7
+        }
+
+        table thead tr:hover {
+            background: #f7f7f7
+        }
+
+        table tr:hover {
+            background: #fbf8e9;
+            -o-transition: all .1s ease-in-out;
+            -webkit-transition: all .1s ease-in-out;
+            -moz-transition: all .1s ease-in-out;
+            -ms-transition: all .1s ease-in-out;
+            transition: all .1s ease-in-out
+        }
+
+        .table th, table td {
+            border-left: 1px solid #ccc;
+            border-top: 1px solid #ccc;
+            padding: 10px;
+            text-align: left
+        }
+
+        table th {
+            border-top: none;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+            padding: 5px;
+            border-left: 1px solid #ccc
+        }
+
+        table td:first-child, table th:first-child {
+            border-left: none
+        }
+
+    </style>
+</head>
+<blockquote>根据这篇<a href="https://zhuanlan.zhihu.com/p/30246788">博客</a> 使用 gin 框架编写</blockquote>
+
+<h2>接口使用</h2>
+<h3>GET /cloudMusic</h3>
+<p>直接将请求转发至 https://api.imjad.cn/cloudmusic/
+    参数传递方式同博客。
+
+<h3>GET/cloudMusic/search</h3>
+<p>search_type：搜索类型
+<p> keyword: 关键字
+
+<h3>GET /cloudMusic/resource</h3>
+<p>type：资源类型
+<p> id: 唯一标识
+<h3>GET /help</h3>
+<p>返回本文档</p>
+
+<h2>附表</h2>
+<h3>搜索类型</h3>
+<table>
+    <tr>
+        <td>search_type</td>
+        <td>含义</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>单曲</td>
+    </tr>
+    <tr>
+        <td>10</td>
+        <td>专辑</td>
+    </tr>
+    <tr>
+        <td>100</td>
+        <td>歌手</td>
+    </tr>
+    <tr>
+        <td>1000</td>
+        <td>歌单</td>
+    </tr>
+    <tr>
+        <td>1002</td>
+        <td>用户</td>
+    </tr>
+    <tr>
+        <td>1004</td>
+        <td>mv</td>
+    </tr>
+    <tr>
+        <td>1006</td>
+        <td>歌词</td>
+    </tr>
+    <tr>
+        <td>1009</td>
+        <td>主播电台</td>
+    </tr>
+</table>
+
+<h3>资源类型</h3>
+<table>
+    <tr>
+        <td>type</td>
+        <td>含义</td>
+    </tr>
+    <tr>
+        <td>song</td>
+        <td>歌曲</td>
+    </tr>
+    <tr>
+        <td>lyric</td>
+        <td>歌词</td>
+    </tr>
+    <tr>
+        <td>comments</td>
+        <td>评论</td>
+    </tr>
+    <tr>
+        <td>detail</td>
+        <td>歌曲详情</td>
+    </tr>
+    <tr>
+        <td>artist</td>
+        <td>歌手</td>
+    </tr>
+    <tr>
+        <td>album</td>
+        <td>专辑</td>
+    </tr>
+</table>
