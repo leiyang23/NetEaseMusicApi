@@ -31,7 +31,8 @@ func main() {
 			"title": "帮助",
 		})
 	})
-	go TickClearCache()
+	go TickClearPlaylistCache()
+	go TickClearSongUrlCache()
 
 	log.Fatal(r.Run(":1627"))
 }
