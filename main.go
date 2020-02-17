@@ -46,6 +46,7 @@ func RandomView(c *gin.Context) {
 		statusCode = 404
 	}
 
+	c.Header("Access-Control-Allow-Origin", "*")
 	c.String(statusCode, res)
 
 }
