@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"io"
 	"io/ioutil"
@@ -37,7 +36,7 @@ func main() {
 	go TickClearPlaylistCache()
 	go TickClearSongUrlCache()
 
-	log.Fatal(autotls.Run(r, "assert.freaks.group"))
+	log.Fatal(r.Run(":1627"))
 }
 
 func RandomView(c *gin.Context) {
