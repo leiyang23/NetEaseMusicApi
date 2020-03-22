@@ -80,6 +80,8 @@ func AssertsView(c *gin.Context) {
 			"code": 404,
 			"msg":  "资源路径不存在",
 		})
+		c.Abort()
+		return
 	}
 
 	var data []string
