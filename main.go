@@ -34,7 +34,8 @@ func main() {
 			"title": "帮助",
 		})
 	})
-	go TickClearCache()
+	go TickClearPlaylistCache()
+	go TickClearSongUrlCache()
 
 	log.Fatal(autotls.Run(r, "assert.freaks.group"))
 }
@@ -49,6 +50,7 @@ func RandomView(c *gin.Context) {
 		statusCode = 404
 	}
 
+	c.Header("Access-Control-Allow-Origin", "*")
 	c.String(statusCode, res)
 
 }

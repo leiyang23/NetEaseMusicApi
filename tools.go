@@ -14,21 +14,33 @@ import (
 // 接口文档：https://zhuanlan.zhihu.com/p/30246788
 var baseUrl string = "https://api.imjad.cn/cloudmusic/"
 
-var CachePlaylist = make(map[string][]string)
-
-func TickClearCache() {
-	// 定时清除缓存
+func TickClearPlaylistCache() {
+	// 定时清除缓存 歌单缓存
 	c := time.Tick(6 * time.Hour)
 	for {
 		<-c
-		fmt.Println("清除缓存")
+		fmt.Println("清除歌单缓存")
 		for i := range CachePlaylist {
 			delete(CachePlaylist, i)
 		}
 	}
 }
+func TickClearSongUrlCache() {
+	// 定时清除缓存 歌曲缓存
+	c := time.Tick(12 * time.Hour)
+	for {
+		<-c
+		fmt.Println("清除歌曲地址缓存")
+		for i := range CacheSongUrl {
+			delete(CacheSongUrl, i)
+		}
+	}
+}
 
-func GetOneSongUrl(playlistId string) (string, error) {
+// 歌单缓存
+var CachePlaylist = make(map[string][]string)
+
+func GetOneSongId(playlistId string) (string, error) {
 	// 随机从缓存集合中取出一个 song id
 	var ok bool
 	var playlist []string
@@ -46,8 +58,9 @@ func GetOneSongUrl(playlistId string) (string, error) {
 		playlist = songIds
 	}
 
+	// 随机从歌单中选取一个 歌曲id
 	rand.Seed(time.Now().UnixNano())
-	index := rand.Intn(len(playlist) - 1)
+	index := rand.Intn(len(playlist))
 
 	songId := playlist[index]
 	return songId, nil
@@ -78,15 +91,23 @@ func updatePlaylist(playlistId string) ([]string, error) {
 	return songIds, nil
 }
 
-// 请求网易后台数据
-func Random(playlistId string) (res string, err error) {
+// 歌曲地址缓存
+var CacheSongUrl = make(map[string]string)
 
-	songId, err := GetOneSongUrl(playlistId)
-	if err != nil {
-		return "", err
+func GetSongUrlById(songId string) (string, error) {
+	songUrl, ok := CacheSongUrl[songId]
+	if !ok {
+		newSongUrl, err := GetSongUrlByReq(songId)
+		if err != nil {
+			return "", err
+		}
+		CacheSongUrl[songId] = newSongUrl
+		return newSongUrl, nil
 	}
-	fmt.Println("获取歌曲id:", songId)
+	return songUrl, nil
+}
 
+func GetSongUrlByReq(songId string) (string, error) {
 	url := baseUrl + "?type=song" + "&id=" + songId
 	resp, err := http.Get(url)
 	if err != nil {
@@ -99,6 +120,19 @@ func Random(playlistId string) (res string, err error) {
 	}
 	songUrlResult := gjson.Get(string(body2), "data.0.url")
 	songUrl := strings.ReplaceAll(songUrlResult.String(), "\\", "")
+	return songUrl, nil
+}
+
+// 控制函数
+func Random(playlistId string) (res string, err error) {
+
+	songId, err := GetOneSongId(playlistId)
+	if err != nil {
+		return "", err
+	}
+	fmt.Println("获取歌曲id:", songId)
+
+	songUrl, err := GetSongUrlById(songId)
 
 	return songUrl, err
 }
