@@ -62,7 +62,7 @@ type AssertParam struct {
 
 func AssertsView(c *gin.Context) {
 	var param AssertParam
-	var basePath = "/home/asserts"
+	var basePath = "/home/assert"
 
 	if err := c.ShouldBind(&param); err != nil {
 		c.String(400, "error: %s", err)
