@@ -83,9 +83,8 @@ func AssertsView(c *gin.Context) {
 	}
 
 	var data []string
-	urlBasePath := "https://asserts.freaks.group" + "/" + aCategory + "/" + aTag
+	urlBasePath := "https://assert.freaks.group" + "/" + aCategory + "/" + aTag
 	for _, fi := range rd {
-		fmt.Println(fi.Name())
 		data = append(data, fi.Name())
 	}
 	c.JSON(200, gin.H{
