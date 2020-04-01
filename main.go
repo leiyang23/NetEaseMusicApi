@@ -27,6 +27,7 @@ func main() {
 	r.LoadHTMLFiles("templates/help.html")
 
 	r.GET("/assert", AssertsView)
+	r.GET("/assert/list", AssertListView)
 	r.GET("/random", RandomView)
 	r.GET("/help", func(c *gin.Context) {
 		c.HTML(200, "help.html", gin.H{
@@ -55,6 +56,37 @@ func RandomView(c *gin.Context) {
 }
 
 // 本网站的资源
+func AssertListView(c *gin.Context) {
+	var basePath = "/home/assert"
+	rd, err := ioutil.ReadDir(basePath)
+	if err != nil {
+		fmt.Println("资源路径不存在")
+		c.JSON(404, gin.H{
+			"code": 404,
+			"msg":  "资源路径不存在",
+		})
+		c.Abort()
+		return
+	}
+
+	data := make(map[string][]string)
+	for _, category := range rd {
+		if category.IsDir() {
+			categoryName := category.Name()
+			sonDir := basePath + "/" + categoryName
+			rd2, _ := ioutil.ReadDir(sonDir)
+			for _, tag := range rd2 {
+				data[categoryName] = append(data[categoryName], tag.Name())
+			}
+		}
+	}
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "success",
+		"data": data,
+	})
+}
+
 type AssertParam struct {
 	Category string `form:"category" binding:"required"`
 	Tag      string `form:"tag" binding:"required"`
