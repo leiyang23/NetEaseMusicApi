@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"neteaseMusicAPI/assert"
+	"neteaseMusicAPI/miniprogram"
 	"os"
 )
 
@@ -24,6 +25,12 @@ func main() {
 	r.Use(gin.Logger())
 
 	r.LoadHTMLFiles("templates/help.html")
+
+	groupMiniprogram := r.Group("/miniprogram")
+	{
+		groupMiniprogram.GET("/login", miniprogram.LoginView)
+		groupMiniprogram.POST("/playlists", miniprogram.PlaylistsView)
+	}
 
 	r.GET("/assert", assert.AssertsView)
 	r.GET("/assert/list", assert.ListView)
