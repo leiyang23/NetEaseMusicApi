@@ -1,11 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
-	"io/ioutil"
 	"log"
+	"neteaseMusicAPI/assert"
 	"os"
 )
 
@@ -26,127 +25,18 @@ func main() {
 
 	r.LoadHTMLFiles("templates/help.html")
 
-	r.GET("/assert", AssertsView)
-	r.GET("/assert/list", AssertListView)
-	r.GET("/random", RandomView)
+	r.GET("/assert", assert.AssertsView)
+	r.GET("/assert/list", assert.ListView)
+	r.GET("/random", assert.RandomView)
 	r.GET("/help", func(c *gin.Context) {
 		c.HTML(200, "help.html", gin.H{
 			"title": "帮助",
 		})
 	})
-	go TickClearPlaylistCache()
-	go TickClearSongUrlCache()
+
+	// 缓存任务
+	go assert.GoTickClearPlaylistCache()
+	go assert.GoTickClearSongUrlCache()
 
 	log.Fatal(r.Run(":1627"))
-}
-
-func RandomView(c *gin.Context) {
-
-	PlaylistId := c.DefaultQuery("playlist_id", "2467106683")
-	res, err := Random(PlaylistId)
-
-	statusCode := 200
-	if err != nil {
-		statusCode = 404
-	}
-
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.String(statusCode, res)
-
-}
-
-// 本网站的资源
-func AssertListView(c *gin.Context) {
-	var basePath = "/home/assert"
-	rd, err := ioutil.ReadDir(basePath)
-	if err != nil {
-		fmt.Println("资源路径不存在")
-		c.JSON(404, gin.H{
-			"code": 404,
-			"msg":  "资源路径不存在",
-		})
-		c.Abort()
-		return
-	}
-
-	data := make(map[string][]string)
-	for _, category := range rd {
-		if category.IsDir() {
-			categoryName := category.Name()
-			sonDir := basePath + "/" + categoryName
-			rd2, _ := ioutil.ReadDir(sonDir)
-			for _, tag := range rd2 {
-				data[categoryName] = append(data[categoryName], tag.Name())
-			}
-		}
-	}
-	c.JSON(200, gin.H{
-		"code": 200,
-		"msg":  "success",
-		"data": data,
-	})
-}
-
-type AssertParam struct {
-	Category string `form:"category" binding:"required"`
-	Tag      string `form:"tag" binding:"required"`
-}
-
-func AssertsView(c *gin.Context) {
-	var param AssertParam
-	var basePath = "/home/assert"
-
-	if err := c.ShouldBind(&param); err != nil {
-		c.String(400, "error: %s", err)
-		c.Abort()
-		return
-	}
-	aCategory := c.Query("category")
-	aTag := c.Query("tag")
-
-	assertPath := basePath + "/" + aCategory + "/" + aTag
-	rd, err := ioutil.ReadDir(assertPath)
-	if err != nil {
-		fmt.Println("资源路径不存在")
-		c.JSON(404, gin.H{
-			"code": 404,
-			"msg":  "资源路径不存在",
-		})
-		c.Abort()
-		return
-	}
-
-	var data []string
-	urlBasePath := "https://assert.freaks.group" + "/" + aCategory + "/" + aTag
-	for _, fi := range rd {
-		data = append(data, fi.Name())
-	}
-	c.JSON(200, gin.H{
-		"code":        200,
-		"msg":         "success",
-		"data":        data,
-		"urlBasePath": urlBasePath,
-	})
-}
-
-// 参数格式
-type ResourceParam struct {
-	Type string `form:"type" binding:"required"`
-	Id   string `form:"id" binding:"required"`
-}
-
-func ResourceView(c *gin.Context) {
-	// 验证参数
-	var param ResourceParam
-	if err := c.ShouldBind(&param); err != nil {
-		c.String(400, "error: %s", err)
-		c.Abort()
-		return
-	}
-
-	rType := c.DefaultQuery("type", "1")
-	rId := c.Query("id")
-	fmt.Println(rType, rId)
-
-	c.String(200, "nothing")
 }
