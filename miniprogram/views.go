@@ -2,6 +2,7 @@ package miniprogram
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
@@ -69,22 +70,303 @@ func LoginView(c *gin.Context) {
 }
 
 func PlaylistsView(c *gin.Context) {
+	sessionId := c.PostForm("sessionId")
+	if sessionId == "" {
+		c.JSON(400, gin.H{
+			"code": -1,
+			"msg":  "need session id",
+		})
+		c.Abort()
+		return
+	}
+	redisClient, err := db.GetRedisClient()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "redis connection error",
+		})
+		c.Abort()
+		return
+	}
 
+	sessionExist := redisClient.Exists(sessionId).Name()
+	if sessionExist != "exists" {
+		c.JSON(503, gin.H{
+			"code": 503,
+			"msg":  "login expired",
+		})
+		c.Abort()
+		return
+	}
+
+	res := redisClient.Get(sessionId).Val()
+	openid := gjson.Get(res, "openid").String()
+	if openid == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "no record",
+		})
+		c.Abort()
+		return
+	}
+
+	playlists_str := redisClient.HGetAll(openid).Val()
+	print(playlists_str)
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "success",
+		"data": playlists_str,
+	})
+
+}
+
+type Playlist struct {
+	Name  string
+	Desc  string
+	Songs []map[string]string
 }
 
 func CreatePlaylistView(c *gin.Context) {
+	//r ,err:= ioutil.ReadAll(c.Request.Body)
+	//fmt.Println(string(r))
+	//fmt.Println(c.Request.Header)
+
+	sessionId := c.PostForm("sessionId")
+	name := c.PostForm("name")
+	desc := c.PostForm("desc")
+	fmt.Println(sessionId, name, desc)
+
+	if sessionId == "" {
+		c.JSON(400, gin.H{
+			"code": -1,
+			"msg":  "need session id",
+		})
+		c.Abort()
+		return
+	}
+	redisClient, err := db.GetRedisClient()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "redis connection error",
+		})
+		c.Abort()
+		return
+	}
+
+	sessionExist := redisClient.Exists(sessionId).Name()
+	if sessionExist != "exists" {
+		c.JSON(503, gin.H{
+			"code": 503,
+			"msg":  "login expired",
+		})
+		c.Abort()
+		return
+	}
+	res := redisClient.Get(sessionId).Val()
+
+	openid := gjson.Get(res, "openid").String()
+	//playlistId := strconv.FormatInt(time.Now().Unix(),10)
+	playlistId := name
+
+	newPlaylist := Playlist{Name: name, Desc: desc, Songs: []map[string]string{}}
+	newPlaylistByte, err := json.Marshal(newPlaylist)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	resp := redisClient.HSet(openid, playlistId, newPlaylistByte).Err()
+	fmt.Println("新建结果：", resp)
+	if resp != nil {
+		fmt.Println("新建歌单失败")
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "fail to create playlist",
+		})
+		c.Abort()
+		return
+	}
+	c.JSON(200, gin.H{
+		"code":       200,
+		"msg":        "success",
+		"playlistId": playlistId,
+	})
 
 }
 func DeletePlaylistView(c *gin.Context) {
+	sessionId := c.PostForm("sessionId")
+	playlistId := c.PostForm("playlistId")
 
-}
-func GetPlaylistView(c *gin.Context) {
+	if sessionId == "" {
+		c.JSON(400, gin.H{
+			"code": -1,
+			"msg":  "need session id",
+		})
+		c.Abort()
+		return
+	}
+	redisClient, err := db.GetRedisClient()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "redis connection error",
+		})
+		c.Abort()
+		return
+	}
 
+	sessionExist := redisClient.Exists(sessionId).Name()
+	if sessionExist != "exists" {
+		c.JSON(503, gin.H{
+			"code": 503,
+			"msg":  "login expired",
+		})
+		c.Abort()
+		return
+	}
+	res := redisClient.Get(sessionId).Val()
+
+	openid := gjson.Get(res, "openid").String()
+
+	err = redisClient.HDel(openid, playlistId).Err()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "fail to del playlist",
+		})
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "success",
+	})
 }
 
 func AddSongToPlaylistView(c *gin.Context) {
+	sessionId := c.PostForm("sessionId")
+	playlistId := c.PostForm("playlistId")
 
+	songName := c.PostForm("songName")
+	songUrl := c.PostForm("url")
+
+	if sessionId == "" {
+		c.JSON(400, gin.H{
+			"code": -1,
+			"msg":  "need session id",
+		})
+		c.Abort()
+		return
+	}
+	redisClient, err := db.GetRedisClient()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "redis connection error",
+		})
+		c.Abort()
+		return
+	}
+
+	sessionExist := redisClient.Exists(sessionId).Name()
+	if sessionExist != "exists" {
+		c.JSON(503, gin.H{
+			"code": 503,
+			"msg":  "login expired",
+		})
+		c.Abort()
+		return
+	}
+	res := redisClient.Get(sessionId).Val()
+
+	openid := gjson.Get(res, "openid").String()
+
+	playlist, _ := redisClient.HGet(openid, playlistId).Bytes()
+
+	var songs []map[string]string
+	err = json.Unmarshal(playlist, &songs)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// 添加歌曲
+	songs = append(songs, map[string]string{"name": songName, "url": songUrl})
+
+	if !redisClient.HSet(openid, playlistId, songs).Val() {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "fail to add song",
+		})
+		c.Abort()
+		return
+	}
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "success",
+	})
 }
-func DelSongFromPlaylistView(c *gin.Context) {
 
+func DelSongFromPlaylistView(c *gin.Context) {
+	sessionId := c.PostForm("sessionId")
+	playlistId := c.PostForm("playlistId")
+
+	songName := c.PostForm("songName")
+
+	if sessionId == "" {
+		c.JSON(400, gin.H{
+			"code": -1,
+			"msg":  "need session id",
+		})
+		c.Abort()
+		return
+	}
+	redisClient, err := db.GetRedisClient()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "redis connection error",
+		})
+		c.Abort()
+		return
+	}
+
+	sessionExist := redisClient.Exists(sessionId).Name()
+	if sessionExist != "exists" {
+		c.JSON(503, gin.H{
+			"code": 503,
+			"msg":  "login expired",
+		})
+		c.Abort()
+		return
+	}
+	res := redisClient.Get(sessionId).Val()
+
+	openid := gjson.Get(res, "openid").String()
+
+	playlist, _ := redisClient.HGet(openid, playlistId).Bytes()
+
+	var songs []map[string]string
+	err = json.Unmarshal(playlist, &songs)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// 删除歌曲
+	for index, value := range songs {
+		if value["name"] == songName {
+			songs = append(songs[:index], songs[index+1:]...)
+		}
+	}
+
+	if !redisClient.HSet(openid, playlistId, songs).Val() {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "fail to del song",
+		})
+		c.Abort()
+		return
+	}
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "success",
+	})
 }

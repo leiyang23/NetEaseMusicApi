@@ -30,6 +30,10 @@ func main() {
 	{
 		groupMiniprogram.GET("/login", miniprogram.LoginView)
 		groupMiniprogram.POST("/playlists", miniprogram.PlaylistsView)
+		groupMiniprogram.POST("/playlist/create", miniprogram.CreatePlaylistView)
+		groupMiniprogram.POST("/playlist/delete", miniprogram.DeletePlaylistView)
+		groupMiniprogram.POST("/playlist/addSong", miniprogram.AddSongToPlaylistView)
+		groupMiniprogram.POST("/playlist/delSong", miniprogram.DelSongFromPlaylistView)
 	}
 
 	r.GET("/assert", assert.AssertsView)
