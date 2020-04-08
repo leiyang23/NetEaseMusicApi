@@ -234,6 +234,8 @@ func DeletePlaylistView(c *gin.Context) {
 			"code": 500,
 			"msg":  "fail to del playlist",
 		})
+		c.Abort()
+		return
 	}
 
 	c.JSON(200, gin.H{
@@ -291,8 +293,8 @@ func AddSongToPlaylistView(c *gin.Context) {
 	// 添加歌曲
 	playlist.Songs = append(playlist.Songs, map[string]string{"name": songName, "url": songUrl})
 
-	playlist_byte, err := json.Marshal(playlist)
-	resp := redisClient.HSet(openid, playlistId, string(playlist_byte))
+	newPlaylistByte, err := json.Marshal(playlist)
+	resp := redisClient.HSet(openid, playlistId, string(newPlaylistByte))
 	if resp.Err() != nil {
 		fmt.Println("插入失败：", resp.Err())
 		fmt.Println(resp.Val())
@@ -347,22 +349,23 @@ func DelSongFromPlaylistView(c *gin.Context) {
 
 	openid := gjson.Get(res, "openid").String()
 
-	playlist, _ := redisClient.HGet(openid, playlistId).Bytes()
+	playlistByte, _ := redisClient.HGet(openid, playlistId).Bytes()
 
-	var songs []map[string]string
-	err = json.Unmarshal(playlist, &songs)
+	var playlist Playlist
+	err = json.Unmarshal(playlistByte, &playlist)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	// 删除歌曲
-	for index, value := range songs {
+	for index, value := range playlist.Songs {
 		if value["name"] == songName {
-			songs = append(songs[:index], songs[index+1:]...)
+			playlist.Songs = append(playlist.Songs[:index], playlist.Songs[index+1:]...)
 		}
 	}
 
-	if !redisClient.HSet(openid, playlistId, songs).Val() {
+	newPlaylistByte, err := json.Marshal(playlist)
+	if !redisClient.HSet(openid, playlistId, string(newPlaylistByte)).Val() {
 		c.JSON(500, gin.H{
 			"code": 500,
 			"msg":  "fail to del song",
