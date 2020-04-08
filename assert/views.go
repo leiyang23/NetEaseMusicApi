@@ -24,6 +24,9 @@ func RandomView(c *gin.Context) {
 var localBase = "/home/assert"
 var urlBase = "https://assert.freaks.group"
 
+//var localBase = "D:/home-server/assert"
+//var urlBase = "http://127.0.0.1"
+
 func ListView(c *gin.Context) {
 	rd, err := ioutil.ReadDir(localBase)
 	if err != nil {

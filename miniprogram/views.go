@@ -247,7 +247,7 @@ func AddSongToPlaylistView(c *gin.Context) {
 	playlistId := c.PostForm("playlistId")
 
 	songName := c.PostForm("songName")
-	songUrl := c.PostForm("url")
+	songUrl := c.PostForm("songUrl")
 
 	if sessionId == "" {
 		c.JSON(400, gin.H{
@@ -280,18 +280,22 @@ func AddSongToPlaylistView(c *gin.Context) {
 
 	openid := gjson.Get(res, "openid").String()
 
-	playlist, _ := redisClient.HGet(openid, playlistId).Bytes()
+	playlistByte, _ := redisClient.HGet(openid, playlistId).Bytes()
 
-	var songs []map[string]string
-	err = json.Unmarshal(playlist, &songs)
+	var playlist Playlist
+	err = json.Unmarshal(playlistByte, &playlist)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	// 添加歌曲
-	songs = append(songs, map[string]string{"name": songName, "url": songUrl})
+	playlist.Songs = append(playlist.Songs, map[string]string{"name": songName, "url": songUrl})
 
-	if !redisClient.HSet(openid, playlistId, songs).Val() {
+	playlist_byte, err := json.Marshal(playlist)
+	resp := redisClient.HSet(openid, playlistId, string(playlist_byte))
+	if resp.Err() != nil {
+		fmt.Println("插入失败：", resp.Err())
+		fmt.Println(resp.Val())
 		c.JSON(500, gin.H{
 			"code": 500,
 			"msg":  "fail to add song",
@@ -299,6 +303,7 @@ func AddSongToPlaylistView(c *gin.Context) {
 		c.Abort()
 		return
 	}
+
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "success",
