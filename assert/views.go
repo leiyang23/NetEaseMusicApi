@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
+	"runtime"
 )
 
 // 随机返回一首网易歌单内的歌曲地址
@@ -24,8 +25,14 @@ func RandomView(c *gin.Context) {
 var localBase = "/home/assert"
 var urlBase = "https://assert.freaks.group"
 
-//var localBase = "D:/home-server/assert"
-//var urlBase = "http://127.0.0.1"
+func init() {
+	sysType := runtime.GOOS
+	if sysType == "windows" {
+		// 本地调试地址，需要配合 Nginx
+		localBase = "D:/home-server/assert"
+		urlBase = "http://127.0.0.1"
+	}
+}
 
 func ListView(c *gin.Context) {
 	rd, err := ioutil.ReadDir(localBase)
