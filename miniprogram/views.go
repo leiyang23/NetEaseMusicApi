@@ -35,7 +35,7 @@ func LoginView(c *gin.Context) {
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	bodyStr := string(body)
-	fmt.Println("body:", bodyStr)
+	//fmt.Println("body:", bodyStr)
 
 	errcodeExist := gjson.Get(bodyStr, "errcode").Exists()
 	if errcodeExist {
@@ -134,7 +134,7 @@ func CreatePlaylistView(c *gin.Context) {
 	sessionId := c.PostForm("sessionId")
 	name := c.PostForm("name")
 	desc := c.PostForm("desc")
-	fmt.Println(sessionId, name, desc)
+	//fmt.Println(sessionId, name, desc)
 
 	if sessionId == "" {
 		c.JSON(400, gin.H{
@@ -365,7 +365,9 @@ func DelSongFromPlaylistView(c *gin.Context) {
 	}
 
 	newPlaylistByte, err := json.Marshal(playlist)
-	if !redisClient.HSet(openid, playlistId, string(newPlaylistByte)).Val() {
+	resp := redisClient.HSet(openid, playlistId, string(newPlaylistByte))
+	if resp.Err() != nil {
+		//fmt.Println(resp.Err())
 		c.JSON(500, gin.H{
 			"code": 500,
 			"msg":  "fail to del song",
