@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"neteaseMusicAPI/assert"
 	"neteaseMusicAPI/miniprogram"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -38,16 +39,14 @@ func main() {
 
 	r.GET("/assert", assert.AssertsView)
 	r.GET("/assert/list", assert.ListView)
-	r.GET("/random", assert.RandomView)
+
+	r.GET("/netease/random", assert.RandomView)
+
 	r.GET("/help", func(c *gin.Context) {
 		c.HTML(200, "help.html", gin.H{
 			"title": "帮助",
 		})
 	})
-
-	// 缓存任务
-	go assert.GoTickClearPlaylistCache()
-	go assert.GoTickClearSongUrlCache()
 
 	log.Fatal(r.Run(":1627"))
 }

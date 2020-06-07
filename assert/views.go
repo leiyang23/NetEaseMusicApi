@@ -2,15 +2,27 @@ package assert
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
-	"runtime"
+
+	"neteaseMusicAPI/assert/local"
+	"neteaseMusicAPI/assert/netease"
 )
+
+func endReq(c *gin.Context, code int, msg string, err interface{}) {
+	fmt.Println(msg, err)
+
+	c.JSON(code, gin.H{
+		"code": code,
+		"msg":  msg,
+	})
+	c.Abort()
+}
 
 // 随机返回一首网易歌单内的歌曲地址
 func RandomView(c *gin.Context) {
-	PlaylistId := c.DefaultQuery("playlist_id", "2467106683")
-	res, err := Random(PlaylistId)
+	PlaylistId := c.DefaultQuery("playlist_id", "")
+	res, err := netease.Random(PlaylistId)
 
 	statusCode := 200
 	if err != nil {
@@ -21,42 +33,13 @@ func RandomView(c *gin.Context) {
 	c.String(statusCode, res)
 }
 
-// 本网站的资源
-var localBase = "/home/assert"
-var urlBase = "https://assert.freaks.group"
-
-func init() {
-	sysType := runtime.GOOS
-	if sysType == "windows" {
-		// 本地调试地址，需要配合 Nginx
-		localBase = "D:/home-server/assert"
-		urlBase = "http://127.0.0.1"
-	}
-}
-
 func ListView(c *gin.Context) {
-	rd, err := ioutil.ReadDir(localBase)
+	data, err := local.List()
 	if err != nil {
-		fmt.Println("资源路径不存在")
-		c.JSON(404, gin.H{
-			"code": 404,
-			"msg":  "资源路径不存在",
-		})
-		c.Abort()
+		endReq(c, 500, "获取列表失败：", err)
 		return
 	}
 
-	data := make(map[string][]string)
-	for _, category := range rd {
-		if category.IsDir() {
-			categoryName := category.Name()
-			sonDir := localBase + "/" + categoryName
-			rd2, _ := ioutil.ReadDir(sonDir)
-			for _, tag := range rd2 {
-				data[categoryName] = append(data[categoryName], tag.Name())
-			}
-		}
-	}
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "success",
@@ -80,23 +63,12 @@ func AssertsView(c *gin.Context) {
 	aCategory := c.Query("category")
 	aTag := c.Query("tag")
 
-	assertPath := localBase + "/" + aCategory + "/" + aTag
-	rd, err := ioutil.ReadDir(assertPath)
+	data, urlBasePath, err := local.Detail(aCategory, aTag)
 	if err != nil {
-		fmt.Println("资源路径不存在")
-		c.JSON(404, gin.H{
-			"code": 404,
-			"msg":  "资源路径不存在",
-		})
-		c.Abort()
+		endReq(c, 500, "获取资源失败：", err)
 		return
 	}
 
-	var data []string
-	urlBasePath := urlBase + "/" + aCategory + "/" + aTag
-	for _, fi := range rd {
-		data = append(data, fi.Name())
-	}
 	c.JSON(200, gin.H{
 		"code":        200,
 		"msg":         "success",

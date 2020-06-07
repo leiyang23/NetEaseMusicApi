@@ -4,22 +4,32 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"neteaseMusicAPI/db"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/tidwall/gjson"
+
+	"neteaseMusicAPI/db"
 )
 
-var appId = "wx5c201194e1d8e3a3"
-var appSecret = "0eb0e5a3805ab207e956889c4a4d3e5c"
+func endReq(c *gin.Context, code int, msg string, err interface{}) {
+	fmt.Println(msg, err)
+
+	c.JSON(code, gin.H{
+		"code": code,
+		"msg":  msg,
+	})
+	c.Abort()
+}
 
 func LoginView(c *gin.Context) {
-	// 获取 openid 和 session_key
-	var wxLoginBaseApi = "https://api.weixin.qq.com/sns/jscode2session"
+	// 从前端请求中获取 code 参数
 	code := c.Query("code")
+
+	// 拼接微信后台登录地址
 	params := url.Values{}
 	params.Set("appid", appId)
 	params.Set("secret", appSecret)
@@ -28,38 +38,34 @@ func LoginView(c *gin.Context) {
 	wxLoginUrl, _ := url.Parse(wxLoginBaseApi)
 	wxLoginUrl.RawQuery = params.Encode()
 	wxLoginUrlPath := wxLoginUrl.String()
+
+	// 获取用户 openid 和 session_key
 	resp, err := http.Get(wxLoginUrlPath)
 	if err != nil {
-		fmt.Println("获取登录信息失败", err)
+		endReq(c, 500, "请求微信后台错误", err)
+		return
 	}
-	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	bodyStr := string(body)
-	//fmt.Println("body:", bodyStr)
+	_ = resp.Body.Close()
 
-	errcodeExist := gjson.Get(bodyStr, "errcode").Exists()
-	if errcodeExist {
-		c.JSON(503, gin.H{
-			"code": 503,
-			"msg":  gjson.Get(bodyStr, "errmsg").String(),
-		})
-		c.Abort()
+	bodyStr := string(body)
+	if gjson.Get(bodyStr, "errcode").Exists() {
+		endReq(c, 500, "微信后台返回错误", gjson.Get(bodyStr, "errmsg").String())
 		return
 	}
 	sessionKey := gjson.Get(bodyStr, "session_key").String()
 	openid := gjson.Get(bodyStr, "openid").String()
 
-	// 记录session
+	// 生成自己 session
 	sessionId := fmt.Sprintf("%x", md5.Sum([]byte(sessionKey+openid)))
+
 	redisClient, err := db.GetRedisClient()
 	if err != nil {
-		fmt.Println("连接redis错误：", err)
+		endReq(c, 500, "连接redis错误", err)
+		return
 	}
 
-	err = redisClient.Set(sessionId, bodyStr, time.Hour*24*7).Err()
-	if err != nil {
-		fmt.Println("添加session失败：", err)
-	}
+	redisClient.Set(sessionId, bodyStr, time.Hour*24*7)
 
 	c.JSON(200, gin.H{
 		"code":      200,
@@ -69,61 +75,34 @@ func LoginView(c *gin.Context) {
 
 }
 
+// get self playlist
 func PlaylistsView(c *gin.Context) {
 	sessionId := c.PostForm("sessionId")
 	if sessionId == "" {
-		c.JSON(400, gin.H{
-			"code": -1,
-			"msg":  "need session id",
-		})
-		c.Abort()
+		endReq(c, 400, "需要登录", sessionId)
 		return
 	}
 	redisClient, err := db.GetRedisClient()
 	if err != nil {
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "redis connection error",
-		})
-		c.Abort()
+		endReq(c, 500, "连接redis错误：", err)
 		return
 	}
 
-	sessionExist := redisClient.Exists(sessionId).Name()
-	if sessionExist != "exists" {
-		c.JSON(503, gin.H{
-			"code": 503,
-			"msg":  "login expired",
-		})
-		c.Abort()
+	session := redisClient.Get(sessionId).Val()
+	if session == "" {
+		endReq(c, 503, "登录已过期", sessionId)
 		return
 	}
-
-	res := redisClient.Get(sessionId).Val()
-	openid := gjson.Get(res, "openid").String()
-	if openid == "" {
-		c.JSON(400, gin.H{
-			"code": 400,
-			"msg":  "no record",
-		})
-		c.Abort()
-		return
-	}
+	openid := gjson.Get(session, "openid").String()
 
 	playlists_str := redisClient.HGetAll(openid).Val()
-	print(playlists_str)
+
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "success",
 		"data": playlists_str,
 	})
 
-}
-
-type Playlist struct {
-	Name  string
-	Desc  string
-	Songs []map[string]string
 }
 
 func CreatePlaylistView(c *gin.Context) {
@@ -136,37 +115,19 @@ func CreatePlaylistView(c *gin.Context) {
 	desc := c.PostForm("desc")
 	//fmt.Println(sessionId, name, desc)
 
-	if sessionId == "" {
-		c.JSON(400, gin.H{
-			"code": -1,
-			"msg":  "need session id",
-		})
-		c.Abort()
-		return
-	}
 	redisClient, err := db.GetRedisClient()
 	if err != nil {
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "redis connection error",
-		})
-		c.Abort()
+		endReq(c, 500, "连接redis错误：", err)
 		return
 	}
 
-	sessionExist := redisClient.Exists(sessionId).Name()
-	if sessionExist != "exists" {
-		c.JSON(503, gin.H{
-			"code": 503,
-			"msg":  "login expired",
-		})
-		c.Abort()
+	session := redisClient.Get(sessionId).Val()
+	if session == "" {
+		endReq(c, 503, "登录已过期", sessionId)
 		return
 	}
-	res := redisClient.Get(sessionId).Val()
+	openid := gjson.Get(session, "openid").String()
 
-	openid := gjson.Get(res, "openid").String()
-	//playlistId := strconv.FormatInt(time.Now().Unix(),10)
 	playlistId := name
 
 	newPlaylist := Playlist{Name: name, Desc: desc, Songs: []map[string]string{}}
@@ -175,15 +136,10 @@ func CreatePlaylistView(c *gin.Context) {
 		fmt.Println(err)
 	}
 
-	resp := redisClient.HSet(openid, playlistId, newPlaylistByte).Err()
-	fmt.Println("新建结果：", resp)
-	if resp != nil {
+	err = redisClient.HSet(openid, playlistId, newPlaylistByte).Err()
+	if err != nil {
 		fmt.Println("新建歌单失败")
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "fail to create playlist",
-		})
-		c.Abort()
+		endReq(c, 500, "新建歌单失败", err)
 		return
 	}
 	c.JSON(200, gin.H{
@@ -197,44 +153,22 @@ func DeletePlaylistView(c *gin.Context) {
 	sessionId := c.PostForm("sessionId")
 	playlistId := c.PostForm("playlistId")
 
-	if sessionId == "" {
-		c.JSON(400, gin.H{
-			"code": -1,
-			"msg":  "need session id",
-		})
-		c.Abort()
-		return
-	}
 	redisClient, err := db.GetRedisClient()
 	if err != nil {
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "redis connection error",
-		})
-		c.Abort()
+		endReq(c, 500, "连接redis错误：", err)
 		return
 	}
 
-	sessionExist := redisClient.Exists(sessionId).Name()
-	if sessionExist != "exists" {
-		c.JSON(503, gin.H{
-			"code": 503,
-			"msg":  "login expired",
-		})
-		c.Abort()
+	session := redisClient.Get(sessionId).Val()
+	if session == "" {
+		endReq(c, 503, "登录已过期", sessionId)
 		return
 	}
-	res := redisClient.Get(sessionId).Val()
-
-	openid := gjson.Get(res, "openid").String()
+	openid := gjson.Get(session, "openid").String()
 
 	err = redisClient.HDel(openid, playlistId).Err()
 	if err != nil {
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "fail to del playlist",
-		})
-		c.Abort()
+		endReq(c, 500, "删除歌单失败", err)
 		return
 	}
 
@@ -251,43 +185,26 @@ func AddSongToPlaylistView(c *gin.Context) {
 	songName := c.PostForm("songName")
 	songUrl := c.PostForm("songUrl")
 
-	if sessionId == "" {
-		c.JSON(400, gin.H{
-			"code": -1,
-			"msg":  "need session id",
-		})
-		c.Abort()
-		return
-	}
 	redisClient, err := db.GetRedisClient()
 	if err != nil {
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "redis connection error",
-		})
-		c.Abort()
+		endReq(c, 500, "连接redis错误：", err)
 		return
 	}
 
-	sessionExist := redisClient.Exists(sessionId).Name()
-	if sessionExist != "exists" {
-		c.JSON(503, gin.H{
-			"code": 503,
-			"msg":  "login expired",
-		})
-		c.Abort()
+	session := redisClient.Get(sessionId).Val()
+	if session == "" {
+		endReq(c, 503, "登录已过期", sessionId)
 		return
 	}
-	res := redisClient.Get(sessionId).Val()
-
-	openid := gjson.Get(res, "openid").String()
+	openid := gjson.Get(session, "openid").String()
 
 	playlistByte, _ := redisClient.HGet(openid, playlistId).Bytes()
 
 	var playlist Playlist
 	err = json.Unmarshal(playlistByte, &playlist)
 	if err != nil {
-		fmt.Println(err)
+		endReq(c, 500, "歌单反序列化失败", err)
+		return
 	}
 
 	// 添加歌曲
@@ -296,13 +213,8 @@ func AddSongToPlaylistView(c *gin.Context) {
 	newPlaylistByte, err := json.Marshal(playlist)
 	resp := redisClient.HSet(openid, playlistId, string(newPlaylistByte))
 	if resp.Err() != nil {
-		fmt.Println("插入失败：", resp.Err())
-		fmt.Println(resp.Val())
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "fail to add song",
-		})
-		c.Abort()
+		// fmt.Println(resp.Val())
+		endReq(c, 500, "保存到redis失败", resp.Err())
 		return
 	}
 
@@ -318,43 +230,26 @@ func DelSongFromPlaylistView(c *gin.Context) {
 
 	songName := c.PostForm("songName")
 
-	if sessionId == "" {
-		c.JSON(400, gin.H{
-			"code": -1,
-			"msg":  "need session id",
-		})
-		c.Abort()
-		return
-	}
 	redisClient, err := db.GetRedisClient()
 	if err != nil {
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "redis connection error",
-		})
-		c.Abort()
+		endReq(c, 500, "连接redis错误", err)
 		return
 	}
 
-	sessionExist := redisClient.Exists(sessionId).Name()
-	if sessionExist != "exists" {
-		c.JSON(503, gin.H{
-			"code": 503,
-			"msg":  "login expired",
-		})
-		c.Abort()
+	session := redisClient.Get(sessionId).Val()
+	if session == "" {
+		endReq(c, 503, "登录已过期", sessionId)
 		return
 	}
-	res := redisClient.Get(sessionId).Val()
-
-	openid := gjson.Get(res, "openid").String()
+	openid := gjson.Get(session, "openid").String()
 
 	playlistByte, _ := redisClient.HGet(openid, playlistId).Bytes()
 
 	var playlist Playlist
 	err = json.Unmarshal(playlistByte, &playlist)
 	if err != nil {
-		fmt.Println(err)
+		endReq(c, 500, "歌单反序列化失败", err)
+		return
 	}
 
 	// 删除歌曲
@@ -365,16 +260,8 @@ func DelSongFromPlaylistView(c *gin.Context) {
 	}
 
 	newPlaylistByte, err := json.Marshal(playlist)
-	resp := redisClient.HSet(openid, playlistId, string(newPlaylistByte))
-	if resp.Err() != nil {
-		//fmt.Println(resp.Err())
-		c.JSON(500, gin.H{
-			"code": 500,
-			"msg":  "fail to del song",
-		})
-		c.Abort()
-		return
-	}
+	redisClient.HSet(openid, playlistId, string(newPlaylistByte))
+
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "success",
