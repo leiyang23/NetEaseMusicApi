@@ -109,7 +109,14 @@ func getUrlBySongId(songId string) (string, error) {
 	songUrl, ok := CacheSongUrl[songId]
 	if !ok {
 		newSongUrl, err := getSongUrlFromApi(songId)
+		if newSongUrl == "" {
+			// 对于已下架或收费的歌曲，无法获取地址，从缓存中删除songid,防止下次取到
+			delete(CacheSongUrl, songId)
+			delete(CachePlaylist, songId)
+			return "", nil
+		}
 		if err != nil {
+			fmt.Println(err)
 			return "", err
 		}
 		CacheSongUrl[songId] = newSongUrl
